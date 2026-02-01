@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import User from "../modules/auth/user.model";
+import User from "../modules/auth/user.model.js";
 
 const seedAdmin = async () => {
   const adminExists = await User.findOne({ role: "ADMIN" });

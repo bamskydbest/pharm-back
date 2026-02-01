@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import app from "./app.js";
-import seedAdmin from "./seed/admin.seed";
+import seedAdmin from "./seed/admin.seed.js";
 
 dotenv.config();
 
