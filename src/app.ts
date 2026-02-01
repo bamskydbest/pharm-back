@@ -5,7 +5,18 @@ import salesRoutes from "./modules/sales/sales.routes.js";
 import inventoryRoutes from "./modules/inventory/inventory.routes.js";
 
 const app = express();
-app.use(cors());
+
+// CORS configuration
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", 
+      "https://pospharm.netlify.app" 
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
