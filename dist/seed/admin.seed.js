@@ -1,6 +1,26 @@
 import bcrypt from "bcryptjs";
 import User from "../modules/auth/user.model.js";
+import Branch from "../modules/branches/branch.model.js";
 const seedAdmin = async () => {
+    let defaultBranch = await Branch.findOne({ code: "MAIN" });
+    if (!defaultBranch) {
+        defaultBranch = await Branch.create({
+            name: "Main Branch",
+            location: "Main Location",
+            code: "MAIN"
+        });
+        console.log("✅ Default branch created");
+    }
+    const usersWithoutBranch = await User.find({ branchId: { $exists: false } });
+    if (usersWithoutBranch.length > 0) {
+        await User.updateMany({ branchId: { $exists: false } }, { $set: { branchId: defaultBranch._id } });
+        console.log(`✅ Fixed ${usersWithoutBranch.length} user(s) without branchId`);
+    }
+    const usersWithNullBranch = await User.find({ branchId: null });
+    if (usersWithNullBranch.length > 0) {
+        await User.updateMany({ branchId: null }, { $set: { branchId: defaultBranch._id } });
+        console.log(`✅ Fixed ${usersWithNullBranch.length} user(s) with null branchId`);
+    }
     const adminExists = await User.findOne({ role: "ADMIN" });
     if (adminExists) {
         console.log("ℹ️ Admin already exists, skipping seed");
@@ -16,8 +36,11 @@ const seedAdmin = async () => {
         name: "System Admin",
         email,
         password: hashedPassword,
-        role: "ADMIN"
+        role: "ADMIN",
+        branchId: defaultBranch._id,
+        status: "active",
+        dateOfEmployment: new Date()
     });
-    console.log("✅ Initial ADMIN user created");
+    console.log("✅ Initial ADMIN user created with branchId");
 };
 export default seedAdmin;

@@ -10,7 +10,7 @@ const router = Router();
  */
 router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
     try {
-        const { name, email, password, role, branchId } = req.body;
+        const { name, email, password, role, branchId, phone, salary, dateOfEmployment, department, address, emergencyContact, emergencyPhone } = req.body;
         const existing = await User.findOne({ email });
         if (existing) {
             return res.status(400).json({ message: "User already exists" });
@@ -21,13 +21,27 @@ router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
             email,
             password: hashedPassword,
             role,
-            ...(branchId ? { branchId } : {})
+            branchId: branchId || req.user?.branchId,
+            phone,
+            salary: salary ? parseFloat(salary) : undefined,
+            dateOfEmployment: dateOfEmployment ? new Date(dateOfEmployment) : new Date(),
+            department,
+            address,
+            emergencyContact,
+            emergencyPhone,
+            status: "active"
         });
         res.status(201).json({
             id: user._id,
             name: user.name,
+            email: user.email,
             role: user.role,
-            branchId: user.branchId
+            branchId: user.branchId,
+            phone: user.phone,
+            salary: user.salary,
+            dateOfEmployment: user.dateOfEmployment,
+            department: user.department,
+            status: user.status
         });
     }
     catch (err) {

@@ -4,11 +4,19 @@ const ProductSchema = new Schema({
     barcode: { type: String, required: true, unique: true },
     category: {
         type: String,
-        enum: ["PRESCRIPTION", "OTC", "SUPPLEMENT", "SUPPLY"],
         required: true
     },
-    manufacturer: String,
+    manufacturer: { type: String },
+    supplier: { type: String },
+    reorderLevel: { type: Number, default: 10 },
+    location: { type: String },
+    status: {
+        type: String,
+        enum: ["active", "discontinued"],
+        default: "active"
+    },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" }
 }, { timestamps: true });
-// ProductSchema.index({ barcode: 1 });
+ProductSchema.index({ barcode: 1 });
+ProductSchema.index({ name: "text" });
 export default model("Product", ProductSchema);

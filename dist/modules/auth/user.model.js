@@ -11,6 +11,19 @@ const UserSchema = new Schema({
     branchId: {
         type: Schema.Types.ObjectId,
         ref: "Branch"
+    },
+    // Employee details
+    phone: { type: String },
+    salary: { type: Number },
+    dateOfEmployment: { type: Date, default: Date.now },
+    department: { type: String },
+    address: { type: String },
+    emergencyContact: { type: String },
+    emergencyPhone: { type: String },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active"
     }
 }, { timestamps: true });
 export default model("User", UserSchema);

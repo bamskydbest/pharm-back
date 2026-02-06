@@ -7,6 +7,15 @@ export interface IUser {
   password: string;
   role: "ADMIN" | "PHARMACIST" | "CASHIER" | "ACCOUNTANT";
   branchId?: Types.ObjectId;
+  // Employee details
+  phone?: string;
+  salary?: number;
+  dateOfEmployment?: Date;
+  department?: string;
+  address?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  status: "active" | "inactive";
 }
 
 const UserSchema = new Schema<IUser>(
@@ -26,6 +35,27 @@ const UserSchema = new Schema<IUser>(
     branchId: {
       type: Schema.Types.ObjectId,
       ref: "Branch"
+    },
+
+    // Employee details
+    phone: { type: String },
+
+    salary: { type: Number },
+
+    dateOfEmployment: { type: Date, default: Date.now },
+
+    department: { type: String },
+
+    address: { type: String },
+
+    emergencyContact: { type: String },
+
+    emergencyPhone: { type: String },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active"
     }
   },
   { timestamps: true }
