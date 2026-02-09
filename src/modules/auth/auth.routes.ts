@@ -49,7 +49,7 @@ router.post("/register", auth, allowRoles("ADMIN"), upload.single("profilePictur
       role,
       branchId: branchId || req.user?.branchId,
       phone,
-      salary: salary ? parseFloat(salary) : undefined,
+      salary: salary ? Math.round(Number(salary) * 100) / 100 : undefined,
       dateOfEmployment: dateOfEmployment ? new Date(dateOfEmployment) : new Date(),
       department,
       address,
