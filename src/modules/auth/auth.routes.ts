@@ -4,13 +4,14 @@ import jwt from "jsonwebtoken";
 import User from "../auth/user.model.js";
 import auth from "../middlewares/auth.middleware.js";
 import allowRoles from "../middlewares/allowRoles.js";
+import upload from "../middlewares/upload.js";
 
 const router = Router();
 
 /**
  * REGISTER USER (ADMIN ONLY)
  */
-router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
+router.post("/register", auth, allowRoles("ADMIN"), upload.single("profilePicture"), async (req, res) => {
   try {
     const {
       name,
@@ -34,6 +35,11 @@ router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Cloudinary returns the full URL in req.file.path
+    const profilePicture = req.file
+      ? req.file.path
+      : undefined;
+
     const user = await User.create({
       name,
       email,
@@ -47,6 +53,7 @@ router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
       address,
       emergencyContact,
       emergencyPhone,
+      profilePicture,
       status: "active"
     });
 
@@ -60,6 +67,7 @@ router.post("/register", auth, allowRoles("ADMIN"), async (req, res) => {
       salary: user.salary,
       dateOfEmployment: user.dateOfEmployment,
       department: user.department,
+      profilePicture: user.profilePicture,
       status: user.status
     });
   } catch (err: any) {

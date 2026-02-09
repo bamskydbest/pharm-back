@@ -73,6 +73,7 @@ router.get("/", auth, allowRoles("ADMIN"), async (req: Request, res: Response) =
       address: emp.address || "",
       emergencyContact: emp.emergencyContact || "",
       emergencyPhone: emp.emergencyPhone || "",
+      profilePicture: emp.profilePicture || "",
       status: emp.status || "active",
       createdAt: emp.createdAt,
       updatedAt: emp.updatedAt
