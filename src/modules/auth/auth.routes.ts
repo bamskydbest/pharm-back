@@ -25,7 +25,9 @@ router.post("/register", auth, allowRoles("ADMIN"), upload.single("profilePictur
       department,
       address,
       emergencyContact,
-      emergencyPhone
+      emergencyPhone,
+      shiftStart,
+      shiftEnd
     } = req.body;
 
     const existing = await User.findOne({ email });
@@ -54,6 +56,8 @@ router.post("/register", auth, allowRoles("ADMIN"), upload.single("profilePictur
       emergencyContact,
       emergencyPhone,
       profilePicture,
+      shiftStart: shiftStart || undefined,
+      shiftEnd: shiftEnd || undefined,
       status: "active"
     });
 

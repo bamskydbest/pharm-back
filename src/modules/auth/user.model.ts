@@ -16,6 +16,8 @@ export interface IUser {
   emergencyContact?: string;
   emergencyPhone?: string;
   profilePicture?: string;
+  shiftStart?: string;
+  shiftEnd?: string;
   status: "active" | "inactive";
 }
 
@@ -54,6 +56,9 @@ const UserSchema = new Schema<IUser>(
     emergencyPhone: { type: String },
 
     profilePicture: { type: String },
+
+    shiftStart: { type: String },
+    shiftEnd: { type: String },
 
     status: {
       type: String,

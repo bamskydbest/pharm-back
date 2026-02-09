@@ -29,7 +29,7 @@ const seedAdmin = async () => {
       { branchId: null },
       { $set: { branchId: defaultBranch._id } }
     );
-    console.log(`✅ Fixed ${usersWithNullBranch.length} user(s) with null branchId`);
+    console.log(` Fixed ${usersWithNullBranch.length} user(s) with null branchId`);
   }
 
   const adminExists = await User.findOne({ role: "ADMIN" });

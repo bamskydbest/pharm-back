@@ -74,6 +74,8 @@ router.get("/", auth, allowRoles("ADMIN"), async (req: Request, res: Response) =
       emergencyContact: emp.emergencyContact || "",
       emergencyPhone: emp.emergencyPhone || "",
       profilePicture: emp.profilePicture || "",
+      shiftStart: emp.shiftStart || "",
+      shiftEnd: emp.shiftEnd || "",
       status: emp.status || "active",
       createdAt: emp.createdAt,
       updatedAt: emp.updatedAt
@@ -123,6 +125,8 @@ router.put("/:id", auth, allowRoles("ADMIN"), async (req: Request, res: Response
       address,
       emergencyContact,
       emergencyPhone,
+      shiftStart,
+      shiftEnd,
       status
     } = req.body;
 
@@ -140,6 +144,8 @@ router.put("/:id", auth, allowRoles("ADMIN"), async (req: Request, res: Response
         address,
         emergencyContact,
         emergencyPhone,
+        shiftStart,
+        shiftEnd,
         status
       },
       { new: true }
