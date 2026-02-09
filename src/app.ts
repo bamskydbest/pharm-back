@@ -8,6 +8,7 @@ import customersRoutes from "./modules/customers/customers.routes.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 import reportsRoutes from "./modules/reports/reports.routes.js";
 import accountingRoutes from "./modules/accounting/accounting.routes.js";
+import payrollRoutes from "./modules/payroll/payroll.routes.js";
 
 const app = express();
 
@@ -33,6 +34,7 @@ app.use("/api/customers", customersRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/accounting", accountingRoutes);
+app.use("/api/payroll", payrollRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

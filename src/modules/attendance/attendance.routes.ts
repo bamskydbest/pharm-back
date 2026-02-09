@@ -326,6 +326,96 @@ router.post("/clock", auth, allowRoles("ADMIN"), async (req: Request, res: Respo
 });
 
 // ────────────────────────────────────────────────────────
+// POST /self-clock — Employee clocks themselves in/out
+// Any authenticated user (no role restriction)
+// ────────────────────────────────────────────────────────
+router.post("/self-clock", auth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const action = req.body.action as "in" | "out";
+    const date = todayStr();
+    const clockTime = new Date();
+
+    if (!action || (action !== "in" && action !== "out")) {
+      return res.status(400).json({ message: "action must be 'in' or 'out'" });
+    }
+
+    if (action === "in") {
+      // Check if already clocked in today
+      const existing = await Attendance.findOne({ employeeId: userId, date });
+      if (existing && existing.clockIn) {
+        return res.status(400).json({ message: "Already clocked in today" });
+      }
+
+      const shiftStart = await getShiftStart(userId);
+      const clockHHMM = `${String(clockTime.getHours()).padStart(2, "0")}:${String(clockTime.getMinutes()).padStart(2, "0")}`;
+      const status = isAfter(clockHHMM, shiftStart) ? "late" : "present";
+
+      const record = await Attendance.findOneAndUpdate(
+        { employeeId: userId, date },
+        {
+          employeeId: userId,
+          date,
+          status,
+          clockIn: clockTime,
+          markedBy: new Types.ObjectId(userId),
+        },
+        { new: true, upsert: true }
+      );
+
+      res.status(201).json({
+        message: status === "late" ? "Clocked in (Late)" : "Clocked in successfully",
+        status,
+        clockIn: record.clockIn,
+      });
+    } else {
+      const existing = await Attendance.findOne({ employeeId: userId, date });
+      if (!existing || !existing.clockIn) {
+        return res.status(400).json({ message: "You haven't clocked in today" });
+      }
+      if (existing.clockOut) {
+        return res.status(400).json({ message: "Already clocked out today" });
+      }
+
+      existing.clockOut = clockTime;
+      existing.hoursWorked = calcHours(existing.clockIn, clockTime);
+      await existing.save();
+
+      res.json({
+        message: "Clocked out successfully",
+        clockOut: existing.clockOut,
+        hoursWorked: existing.hoursWorked,
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ────────────────────────────────────────────────────────
+// GET /my-status — Get own attendance status for today
+// Any authenticated user (no role restriction)
+// ────────────────────────────────────────────────────────
+router.get("/my-status", auth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const date = todayStr();
+
+    const record = await Attendance.findOne({ employeeId: userId, date });
+
+    res.json({
+      date,
+      status: record?.status || "not_marked",
+      clockIn: record?.clockIn?.toISOString() || null,
+      clockOut: record?.clockOut?.toISOString() || null,
+      hoursWorked: record?.hoursWorked || 0,
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ────────────────────────────────────────────────────────
 // GET /employee/:id — Records for an employee in date range
 // NOTE: Must come after /settings, /summary, /daily, /bulk, /clock
 // ────────────────────────────────────────────────────────
