@@ -12,14 +12,15 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "pharmacy-pos/profiles",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"], // different format that i want 
     transformation: [{ width: 500, height: 500, crop: "fill", gravity: "face" }],
   } as any,
 });
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB bandwith
+
 });
 
 export default upload;
