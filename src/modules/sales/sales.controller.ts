@@ -23,7 +23,8 @@ export interface AuthenticatedRequest extends Request {
     id: string;
     role: UserRole;
     branchId: string;
-    name?: string; // optional incase i missed it in the middleware
+    name?: string;
+    
   };
 }
 

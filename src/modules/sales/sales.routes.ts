@@ -242,22 +242,23 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const branchId = new Types.ObjectId(req.user!.branchId);
-      const q = (req.query.q as string || "").trim().toUpperCase();
+      const q = (req.query.q as string || "").trim().toLowerCase();
 
       if (!q || q.length < 3) {
         return res.status(400).json({ message: "Please enter at least 3 characters of the receipt ID" });
       }
 
-      // Try exact ObjectId match first
-      const sales = await Sale.find({ branchId }).sort({ createdAt: -1 }).limit(500);
+      // Use aggregation to search _id as string across ALL sales
+      const matches = await Sale.aggregate([
+        { $match: { branchId } },
+        { $addFields: { idStr: { $toString: "$_id" } } },
+        { $match: { idStr: { $regex: q, $options: "i" } } },
+        { $sort: { createdAt: -1 as const } },
+        { $limit: 10 },
+        { $project: { idStr: 0 } },
+      ]);
 
-      // Filter by last N characters of _id (what's printed on receipt)
-      const matches = sales.filter((s) =>
-        s._id.toString().toUpperCase().endsWith(q) ||
-        s._id.toString().toUpperCase().includes(q)
-      );
-
-      res.json(matches.slice(0, 10));
+      res.json(matches);
     } catch (error: any) {
       console.error("GET /sales/lookup error:", error);
       res.status(500).json({ message: error.message });
