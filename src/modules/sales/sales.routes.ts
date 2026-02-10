@@ -196,14 +196,73 @@ await Ledger.create(
 );
 
 /**
- * DOWNLOAD RECEIPT PDF
- * Roles: ADMIN, CASHIER
+ * LIST SALES (with date filtering)
+ * Roles: ADMIN, CASHIER, ACCOUNTANT
+ * Query: ?from=YYYY-MM-DD&to=YYYY-MM-DD
  */
 router.get(
-  "/:id/receipt",
+  "/",
+  auth,
+  allowRoles("ADMIN", "CASHIER", "ACCOUNTANT"),
+  async (req: Request, res: Response) => {
+    try {
+      const branchId = new Types.ObjectId(req.user!.branchId);
+      const { from, to } = req.query;
+
+      const match: any = { branchId };
+
+      if (from || to) {
+        match.createdAt = {};
+        if (from) match.createdAt.$gte = new Date(from as string);
+        if (to) {
+          const toDate = new Date(to as string);
+          toDate.setHours(23, 59, 59, 999);
+          match.createdAt.$lte = toDate;
+        }
+      }
+
+      const sales = await Sale.find(match).sort({ createdAt: -1 }).limit(200);
+      res.json(sales);
+    } catch (error: any) {
+      console.error("GET /sales error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
+
+/**
+ * LOOKUP SALE BY RECEIPT ID (partial match on _id suffix)
+ * Roles: ADMIN, CASHIER
+ * Query: ?q=ABC123
+ */
+router.get(
+  "/lookup",
   auth,
   allowRoles("ADMIN", "CASHIER"),
-  generateReceipt
+  async (req: Request, res: Response) => {
+    try {
+      const branchId = new Types.ObjectId(req.user!.branchId);
+      const q = (req.query.q as string || "").trim().toUpperCase();
+
+      if (!q || q.length < 3) {
+        return res.status(400).json({ message: "Please enter at least 3 characters of the receipt ID" });
+      }
+
+      // Try exact ObjectId match first
+      const sales = await Sale.find({ branchId }).sort({ createdAt: -1 }).limit(500);
+
+      // Filter by last N characters of _id (what's printed on receipt)
+      const matches = sales.filter((s) =>
+        s._id.toString().toUpperCase().endsWith(q) ||
+        s._id.toString().toUpperCase().includes(q)
+      );
+
+      res.json(matches.slice(0, 10));
+    } catch (error: any) {
+      console.error("GET /sales/lookup error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  }
 );
 
 /**
@@ -241,6 +300,17 @@ router.get(
       res.status(500).json({ message: error.message });
     }
   }
+);
+
+/**
+ * DOWNLOAD RECEIPT PDF
+ * Roles: ADMIN, CASHIER
+ */
+router.get(
+  "/:id/receipt",
+  auth,
+  allowRoles("ADMIN", "CASHIER"),
+  generateReceipt
 );
 
 export default router;
