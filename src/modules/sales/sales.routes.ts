@@ -5,6 +5,7 @@ import allowRoles from "../middlewares/allowRoles.js";
 import Sale from "../models/sale.model.js";
 import Ledger from "../accounting/ledger.model.js";
 import Batch from "../inventory/models/batch.model.js";
+import Customer from "../customers/customer.model.js";
 import { generateReceipt } from "../sales/receipt.controller.js";
 
 const router = Router();
@@ -21,7 +22,7 @@ router.post(
   async (req: Request, res: Response) => {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
-    const { items, paymentMethod, amountPaid } = req.body;
+    const { items, paymentMethod, amountPaid, customer } = req.body;
     const branchId = new Types.ObjectId(req.user.branchId);
 
     const session = await startSession();
@@ -114,6 +115,51 @@ await Ledger.create(
       // Commit transaction
       await session.commitTransaction();
       session.endSession();
+
+      // Handle customer creation/update (outside transaction — non-critical)
+      if (customer && customer.name) {
+        try {
+          if (customer.isNew && customer.phone) {
+            // Create new customer if doesn't already exist
+            const existing = await Customer.findOne({ phone: customer.phone, branchId });
+            if (!existing) {
+              await Customer.create({
+                name: customer.name,
+                phone: customer.phone,
+                email: customer.email || "",
+                address: customer.address || "",
+                branchId,
+                loyaltyPoints: Math.floor(subtotal / 10),
+                totalSpent: subtotal,
+                purchaseCount: 1,
+                lastVisit: new Date(),
+              });
+            } else {
+              // Customer with this phone exists — update their stats
+              await Customer.findByIdAndUpdate(existing._id, {
+                $inc: {
+                  totalSpent: subtotal,
+                  purchaseCount: 1,
+                  loyaltyPoints: Math.floor(subtotal / 10),
+                },
+                lastVisit: new Date(),
+              });
+            }
+          } else if (customer.customerId) {
+            // Existing customer — update stats
+            await Customer.findByIdAndUpdate(customer.customerId, {
+              $inc: {
+                totalSpent: subtotal,
+                purchaseCount: 1,
+                loyaltyPoints: Math.floor(subtotal / 10),
+              },
+              lastVisit: new Date(),
+            });
+          }
+        } catch (custErr) {
+          console.error("Customer update error (non-critical):", custErr);
+        }
+      }
 
       res.status(201).json(sale[0]);
     } catch (error: any) {

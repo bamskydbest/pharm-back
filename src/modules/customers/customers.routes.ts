@@ -21,24 +21,27 @@ const getBranchId = (req: Request): Types.ObjectId | null => {
 };
 
 /**
- * GET /customers/search/:query - Search customers by name or phone
+ * GET /customers/search?q=term - Search customers by name or phone (query param)
  * Roles: ADMIN, CASHIER
  * NOTE: Must be defined BEFORE /:id to avoid route conflicts
  */
-router.get("/search/:query", auth, allowRoles("ADMIN", "CASHIER"), async (req: Request, res: Response) => {
+router.get("/search", auth, allowRoles("ADMIN", "CASHIER"), async (req: Request, res: Response) => {
   try {
     const branchId = getBranchId(req);
     if (!branchId) {
       return res.status(400).json({ message: "Branch not configured. Please contact admin." });
     }
 
-    const { query } = req.params;
+    const q = (req.query.q as string || "").trim();
+    if (!q || q.length < 2) {
+      return res.json([]);
+    }
 
     const customers = await Customer.find({
       branchId,
       $or: [
-        { name: { $regex: query, $options: "i" } },
-        { phone: { $regex: query, $options: "i" } }
+        { name: { $regex: q, $options: "i" } },
+        { phone: { $regex: q, $options: "i" } }
       ]
     }).limit(20);
 
