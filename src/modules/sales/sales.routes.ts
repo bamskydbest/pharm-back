@@ -90,8 +90,8 @@ const sale = await Sale.create(
       change: amountPaid - subtotal,
       branchId,
       soldBy: {
-        id: new Types.ObjectId(req.user.id), 
-        name: req.user.role
+        id: new Types.ObjectId(req.user.id),
+        name: req.user.name || req.user.role
       }
     }
   ],
