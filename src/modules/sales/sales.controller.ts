@@ -101,13 +101,15 @@ export const createSale = async (
       amountPaid,
       change: amountPaid - subtotal,
       soldBy: {
-        id: new mongoose.Types.ObjectId(req.user.id), //convert string to ObjectId
+        id: new mongoose.Types.ObjectId(req.user.id),
         name: req.user.name,
       },
     },
   ],
   { session }
 );
+
+
 
     await session.commitTransaction();
     res.status(201).json({
