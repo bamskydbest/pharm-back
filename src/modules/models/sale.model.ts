@@ -12,7 +12,7 @@ export interface SaleItem {
 export interface SaleDoc extends Document {
   items: SaleItem[];
   subtotal: number;
-  paymentMethod: "CASH" | "MOMO" | "CARD";
+  paymentMethod: string;
   amountPaid: number;
   change: number;
   branchId: Types.ObjectId;
@@ -40,7 +40,7 @@ const SaleSchema = new Schema<SaleDoc>(
   {
     items: { type: [SaleItemSchema], required: true },
     subtotal: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ["CASH", "MOMO", "CARD"], required: true },
+    paymentMethod: { type: String, required: true },
     amountPaid: { type: Number, required: true },
     change: { type: Number, required: true },
     branchId: { type: Types.ObjectId, ref: "Branch", required: true },

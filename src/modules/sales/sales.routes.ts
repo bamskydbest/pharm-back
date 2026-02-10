@@ -5,6 +5,7 @@ import allowRoles from "../middlewares/allowRoles.js";
 import Sale from "../models/sale.model.js";
 import Ledger from "../accounting/ledger.model.js";
 import Batch from "../inventory/models/batch.model.js";
+import StockMovement from "../inventory/models/stockMovement.model.js";
 import Customer from "../customers/customer.model.js";
 import { generateReceipt } from "../sales/receipt.controller.js";
 
@@ -64,10 +65,13 @@ router.post(
           saleItems.push({
             productId: item.productId,
             batchId: batch._id,
+            batchNumber: batch.batchNumber,
             name: item.name,
             quantity: usedQty,
             unitPrice: item.unitPrice,
-            total: usedQty * item.unitPrice
+            total: usedQty * item.unitPrice,
+            previousQuantity: batch.quantity,
+            newQuantity: updated.quantity
           });
 
           subtotal += usedQty * item.unitPrice;
@@ -111,6 +115,26 @@ await Ledger.create(
   ] as any,
   { session }
 );
+
+      // Record stock movements for each item sold
+      const stockMovements = saleItems.map((si: any) => ({
+        productId: si.productId,
+        productName: si.name,
+        batchId: si.batchId,
+        batchNumber: si.batchNumber || "",
+        type: "sale" as const,
+        quantity: si.quantity,
+        previousQuantity: si.previousQuantity,
+        newQuantity: si.newQuantity,
+        sellingPrice: si.unitPrice,
+        reason: "POS Sale",
+        reference: sale[0]._id.toString(),
+        branchId,
+        performedBy: req.user!.name || req.user!.role,
+        performedById: new Types.ObjectId(req.user!.id),
+      }));
+
+      await StockMovement.insertMany(stockMovements, { session });
 
       // Commit transaction
       await session.commitTransaction();
